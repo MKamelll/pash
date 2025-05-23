@@ -9,12 +9,16 @@ class Cmd:
         self._stdout: str = ""
         self._stderr: str = ""
         self._input: str = ""
+        self._has_run = False
         self._suppress_printing = False
         for arg in args:
             self.command.append(arg)
         self.process : subprocess.Popen[str] | None = None
     
     def __call__(self) -> str:
+        if self._has_run:
+            return self._stdout
+        self._has_run = True
         self.process = subprocess.Popen(self.command,
                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         if self.process:
@@ -23,13 +27,14 @@ class Cmd:
                 print(self._stderr, file=sys.stderr)
                 exit(self.process.returncode)
             if not self._suppress_printing:
-                print(self._stdout)
+                print(self._stdout, end="")
         return self._stdout
     
     def __or__(self, other: Self) -> Self:
+        self._suppress_printing = True
         self()
         other._input = self._stdout
-        other()
+        self._suppress_printing = False
         return other
     
     def __gt__(self, other: str) -> Self:
@@ -50,7 +55,7 @@ class Cmd:
     
     def __lt__(self, other: str) -> Self:
         self._suppress_printing = True
-        with open(other, "w") as f:
+        with open(other, "r") as f:
             self._input = f.read()
         self._suppress_printing = False
         return self
@@ -62,6 +67,7 @@ class Cmd:
     
     def __xor__(self, other: str) -> Self:
         self._suppress_printing = True
+        self()
         with open(other, "w") as f:
             f.write(self._stderr)
         self._suppress_printing = False
@@ -69,6 +75,7 @@ class Cmd:
 
     def __and__(self, other: str) -> Self:
         self._suppress_printing = True
+        self()
         with open(other, "w") as f:
             f.write(self._stdout)
             f.write(self._stderr)

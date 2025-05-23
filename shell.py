@@ -754,6 +754,9 @@ class Shell:
     def parted(self, *args: str) -> Cmd:
         return Cmd("parted", list(args))
     
+    def cat(self, *args: str) -> Cmd:
+        return Cmd("cat", list(args))
+    
     # run something that not in the list
     def custom_command(self, command: str, *args: str) -> Cmd:
         return Cmd(command, list(args))
