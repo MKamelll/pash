@@ -15,9 +15,8 @@ class Cmd:
             self.command.append(arg)
         self.process : subprocess.Popen[str] | None = None
     
-    def run(self) -> Self:
-        if self._has_run:
-            return self
+    def __call__(self) -> None:
+        if self._has_run: return
         self._has_run = True
         self.process = subprocess.Popen(self.command,
                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -28,18 +27,17 @@ class Cmd:
                 exit(self.process.returncode)
             if not self._suppress_printing:
                 print(self._stdout, end="")
-        return self
     
     def __or__(self, other: Self) -> Self:
         self._suppress_printing = True
-        self.run()
+        self()
         other._input = self._stdout
         self._suppress_printing = False
         return other
     
     def __gt__(self, other: str) -> Self:
         self._suppress_printing = True
-        self.run()
+        self()
         with open(other, "w") as f:
             f.write(self._stdout)
         self._suppress_printing = False
@@ -47,40 +45,42 @@ class Cmd:
     
     def __rshift__(self, other: str) -> Self:
         self._suppress_printing = True
-        self.run()
+        self()
         with open(other, "a") as f:
             f.write(self._stdout)
         self._suppress_printing = False
         return self
-    
+        
     def __lt__(self, other: str) -> Self:
         self._suppress_printing = True
         with open(other, "r") as f:
             self._input = f.read()
+        self()
         self._suppress_printing = False
         return self
-    
+         
     def __lshift__(self, other: str) -> Self:
         self._input = other
-        return self
+        self()
+        return self        
     
     def __xor__(self, other: str) -> Self:
         self._suppress_printing = True
-        self.run()
+        self()
         with open(other, "w") as f:
             f.write(self._stderr)
         self._suppress_printing = False
         return self
-
+        
     def __and__(self, other: str) -> Self:
         self._suppress_printing = True
-        self.run()
+        self()
         with open(other, "w") as f:
             f.write(self._stdout)
             f.write(self._stderr)
         self._suppress_printing = False
         return self
-    
+        
     def stdout(self) -> str:
         return self._stdout
     
