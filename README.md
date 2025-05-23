@@ -6,6 +6,6 @@ from shell import Shell
     
 if __name__ == "__main__":
     sh = Shell()
-    result = sh.ls("-la") | sh.wc("-l")
-    print(result())
+    result = sh.ls("-la") | sh.grep("-ie", "main") > "test.txt"
+    result()
 ```
