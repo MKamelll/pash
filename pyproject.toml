@@ -1,0 +1,12 @@
+[project]
+name = "pash-py"
+version = "0.1.0"
+description = "Run shell commands with python"
+authors = [{ name = "Mina Kamel", email = "minallkamel@gmail.com" }]
+readme = "README.md"
+license = { file = "LICENSE" }
+dependencies = []  # List your deps here
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
