@@ -3,21 +3,21 @@ import sys
 from typing import Self
 
 class Cmd:
-    def __init__(self, cmd: str, args: list[str]) -> None:
+    def __init__(self, cmd: str, args: list[str], suppress_printing: bool=False) -> None:
         self.command: list[str] = []
         self.command.append(cmd)
         self._stdout: str = ""
         self._stderr: str = ""
         self._input: str = ""
         self._has_run = False
-        self._suppress_printing = False
+        self._suppress_printing = suppress_printing
         for arg in args:
             self.command.append(arg)
         self.process : subprocess.Popen[str] | None = None
     
-    def __call__(self) -> str:
+    def run(self) -> Self:
         if self._has_run:
-            return self._stdout
+            return self
         self._has_run = True
         self.process = subprocess.Popen(self.command,
                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -28,18 +28,18 @@ class Cmd:
                 exit(self.process.returncode)
             if not self._suppress_printing:
                 print(self._stdout, end="")
-        return self._stdout
+        return self
     
     def __or__(self, other: Self) -> Self:
         self._suppress_printing = True
-        self()
+        self.run()
         other._input = self._stdout
         self._suppress_printing = False
         return other
     
     def __gt__(self, other: str) -> Self:
         self._suppress_printing = True
-        self()
+        self.run()
         with open(other, "w") as f:
             f.write(self._stdout)
         self._suppress_printing = False
@@ -47,7 +47,7 @@ class Cmd:
     
     def __rshift__(self, other: str) -> Self:
         self._suppress_printing = True
-        self()
+        self.run()
         with open(other, "a") as f:
             f.write(self._stdout)
         self._suppress_printing = False
@@ -61,13 +61,12 @@ class Cmd:
         return self
     
     def __lshift__(self, other: str) -> Self:
-        self._suppress_printing = True
         self._input = other
         return self
     
     def __xor__(self, other: str) -> Self:
         self._suppress_printing = True
-        self()
+        self.run()
         with open(other, "w") as f:
             f.write(self._stderr)
         self._suppress_printing = False
@@ -75,9 +74,15 @@ class Cmd:
 
     def __and__(self, other: str) -> Self:
         self._suppress_printing = True
-        self()
+        self.run()
         with open(other, "w") as f:
             f.write(self._stdout)
             f.write(self._stderr)
         self._suppress_printing = False
         return self
+    
+    def stdout(self) -> str:
+        return self._stdout
+    
+    def stderr(self) -> str:
+        return self._stderr
