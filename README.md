@@ -1,6 +1,8 @@
 # pash
 Run shell commands from pyhton
 
+Available on pypi [pash-py](https://pypi.org/project/pash-py/)
+
 ```python
 from shell import Shell
 
