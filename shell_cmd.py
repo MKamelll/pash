@@ -9,6 +9,7 @@ class Cmd:
         self._stdout: str = ""
         self._stderr: str = ""
         self._input: str = ""
+        self._suppress_printing = False
         for arg in args:
             self.command.append(arg)
         self.process : subprocess.Popen[str] | None = None
@@ -21,10 +22,55 @@ class Cmd:
             if len(self._stderr.strip()) > 0:
                 print(self._stderr, file=sys.stderr)
                 exit(self.process.returncode)
+            if not self._suppress_printing:
+                print(self._stdout)
         return self._stdout
     
     def __or__(self, other: Self) -> Self:
         self()
         other._input = self._stdout
         other()
-        return other    
+        return other
+    
+    def __gt__(self, other: str) -> Self:
+        self._suppress_printing = True
+        self()
+        with open(other, "w") as f:
+            f.write(self._stdout)
+        self._suppress_printing = False
+        return self
+    
+    def __rshift__(self, other: str) -> Self:
+        self._suppress_printing = True
+        self()
+        with open(other, "a") as f:
+            f.write(self._stdout)
+        self._suppress_printing = False
+        return self
+    
+    def __lt__(self, other: str) -> Self:
+        self._suppress_printing = True
+        with open(other, "w") as f:
+            self._input = f.read()
+        self._suppress_printing = False
+        return self
+    
+    def __lshift__(self, other: str) -> Self:
+        self._suppress_printing = True
+        self._input = other
+        return self
+    
+    def __xor__(self, other: str) -> Self:
+        self._suppress_printing = True
+        with open(other, "w") as f:
+            f.write(self._stderr)
+        self._suppress_printing = False
+        return self
+
+    def __and__(self, other: str) -> Self:
+        self._suppress_printing = True
+        with open(other, "w") as f:
+            f.write(self._stdout)
+            f.write(self._stderr)
+        self._suppress_printing = False
+        return self
